@@ -1,0 +1,40 @@
+-- STAGE 2
+-- DATASET TRANSFORMATION AND INGESTION
+
+-- CREATE A NEW TABLE FOR ANALYTICS TEAM
+CREATE TABLE nse_share_index (
+id SERIAL PRIMARY KEY,
+date DATE,
+price NUMERIC,
+open NUMERIC,
+high NUMERIC,
+low NUMERIC,
+vol BIGINT,
+change NUMERIC
+);
+
+-- INGESTING OR INSERT CLEANED DATA INTO nse_share_index table FROM temp_file
+INSERT INTO nse_share_index(date, price, open, high, low, vol, change)
+SELECT 
+	TO_DATE(date,'DD/MM/YYYY') AS date,
+	REPLACE(price, ',', '')::NUMERIC AS price,
+	REPLACE(open, ',', '')::NUMERIC AS open,
+	REPLACE(high, ',', '')::NUMERIC AS high,
+	REPLACE(low, ',', '')::NUMERIC AS low,
+	-- convert volume: '423.20M' -> 423200000
+	CASE
+		WHEN RIGHT("vol", 1) = 'M' THEN (REPLACE(LEFT("vol", LENGTH("vol")-1),
+		',', '')::NUMERIC *1000000)::BIGINT
+		WHEN RIGHT("vol", 1) = 'B' THEN (REPLACE(LEFT("vol", LENGTH("vol")-1),
+		',', '')::NUMERIC *1000000000)::BIGINT
+			ELSE NULL
+	END AS vol,
+	-- change: '-0.36%' -> -0.36
+	REPLACE("change", '%', '')::NUMERIC AS change
+FROM temp_file;
+
+-- CONFIRMING IF INGESTION WORKED
+SELECT * 
+FROM nse_share_index
+ORDER BY date DESC
+LIMIT 5;

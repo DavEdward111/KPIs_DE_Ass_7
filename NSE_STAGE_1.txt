@@ -1,0 +1,65 @@
+-- STAGE 1
+-- Inspecting the dataset for data transformation
+
+CREATE TABLE temp_file(
+Date TEXT,
+Price TEXT,
+Open TEXT,
+High TEXT,
+Low TEXT,
+Vol TEXT,
+Change  TEXT
+);
+
+-- Checking the imported dataset
+SELECT *
+FROM temp_file;
+
+-- Check data types
+SELECT 
+	column_name,
+	data_type
+FROM 
+	information_schema.columns
+WHERE
+	table_name = 'temp_file';
+
+
+-- Preview the first few rows
+SELECT *
+FROM temp_file
+LIMIT 10;
+
+-- Check for distinct patterns in columns of the dataset
+SELECT DISTINCT date 
+FROM temp_file 
+ORDER BY date 
+LIMIT 5;
+
+-- PRICE
+SELECT DISTINCT price
+FROM temp_file
+ORDER BY price
+LIMIT 5;
+
+-- OPEN
+SELECT DISTINCT open
+FROM temp_file
+ORDER BY open
+LIMIT 5;
+
+-- VOLUME
+SELECT DISTINCT vol
+FROM temp_file
+ORDER BY vol
+LIMIT 5;
+
+-- Check for Invalid data
+SELECT *
+FROM temp_file
+WHERE price !~ '^[0-9,\.]+$'
+	OR open !~ '^[0-9,\.]+$'
+	OR date IS NULL;
+
+-- THE DATASET IS OKAY FOR INGESTION
+

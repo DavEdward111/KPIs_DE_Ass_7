@@ -1,0 +1,80 @@
+-- STEP 3
+-- PROVIDING THE ANALYTICS TEAM THE PROPERLY SQL QUERIES FOR THE FOLLOWING KPIs:
+
+-- HIGHEST DAILY RETURN
+-- Formula : (price - open)/open * 100
+SELECT 
+	date,
+	ROUND(((price - open)/open)*100,2) AS daily_return
+FROM nse_share_index
+WHERE open > 0
+ORDER BY daily_return DESC
+LIMIT 1;
+
+-- AVERAGE MONTHLY CLOSE
+SELECT 
+	DATE_TRUNC('month', date) AS month,
+	ROUND(AVG(price),2) AS avg_monthly_close
+FROM nse_share_index
+GROUP BY month
+ORDER BY month;
+
+-- MONTHLY VOLATILITY TREND
+with daily_returns AS (
+	SELECT
+		date,
+		DATE_TRUNC('month', date) AS month,
+		((price - open) / open) * 100 AS daily_return
+	FROM nse_share_index
+	WHERE open > 0 
+)
+SELECT 
+	month,
+	ROUND(STDDEV(daily_return), 2) AS monthly_volatility
+FROM daily_returns
+GROUP BY month
+ORDER BY month;
+
+-- 5 LOWEST DRAWDOWN PERIODS
+-- DRAWDOWN = % DROP FROM PEAK TO CLOSE
+WITH running_peaks AS(
+	SELECT
+		date,
+		price,
+		MAX(price) OVER (ORDER BY date) AS peak
+	FROM nse_share_index
+),
+drawdowns AS (
+	SELECT
+		date,
+		price,
+		peak,
+		ROUND(((price - peak) / peak) * 100, 2) AS drawdown_percent
+	FROM running_peaks
+)
+SELECT
+	date,
+	price,
+	peak,
+	drawdown_percent
+FROM drawdowns
+ORDER BY drawdown_percent ASC
+LIMIT 5;
+
+-- LAST 30-DAY AVERAGE RETURN
+-- Using most recent 30 trading days
+WITH recent_30_days AS (
+	SELECT 
+		date,
+		((price - open) / open) * 100 AS daily_return
+	FROM nse_share_index
+	WHERE open > 0
+	ORDER BY date DESC
+	LIMIT 30
+)
+SELECT 
+	ROUND(AVG(daily_return), 2) AS last_30_day_avg_return
+FROM recent_30_days;
+
+-- ALL THE KPIs ARE READY FOR ANALYTICS TEAM USE.
+	
